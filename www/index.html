@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pro App</title>
+</head>
+
+<body style="text-align:center; font-family:sans-serif; padding-top:50px;">
+
+  <h2>¿Crees que soy pro? 😎</h2>
+
+  <button onclick="responder('si')">Sí</button>
+  <button onclick="responder('no')">No</button>
+
+  <div id="resultado" style="margin-top:30px;"></div>
+
+  <script>
+    function responder(opcion) {
+      const div = document.getElementById("resultado");
+
+      if (opcion === "si") {
+        div.innerHTML = `
+          <h3>jejeje like 😎</h3>
+          <img src="jeje like.jpeg" width="250">
+        `;
+      } else {
+        div.innerHTML = `
+          <h3>💀 ok...</h3>
+          <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" width="250">
+        `;
+      }
+    }
+  </script>
+
+</body>
+</html>
