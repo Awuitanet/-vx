@@ -13,7 +13,7 @@
       color: white;
     }
     .hidden { display: none !important; }
-
+    
     .card {
       background: rgba(255,255,255,0.95);
       color: #333;
@@ -23,9 +23,9 @@
       margin: 20px auto;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     }
-
+    
     h2 { margin-top: 0; color: #333; }
-
+    
     button {
       padding: 12px 25px;
       margin: 8px;
@@ -39,10 +39,10 @@
     }
     button:hover { transform: scale(1.05); }
     button:active { transform: scale(0.95); }
-
+    
     .btn-si { background: #28a745; }
     .btn-no { background: #dc3545; }
-
+    
     input[type="text"], input[type="password"], input[type="file"] {
       padding: 12px;
       margin: 8px;
@@ -52,16 +52,16 @@
       width: 80%;
       max-width: 300px;
     }
-
+    
     #error { color: #dc3545; margin-top: 10px; font-weight: bold; }
-
+    
     .album {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
       padding: 20px;
     }
-
+    
     .album img {
       width: 100%;
       height: 150px;
@@ -71,7 +71,7 @@
       transition: transform 0.3s;
     }
     .album img:hover { transform: scale(1.05); }
-
+    
     .upload-area {
       border: 3px dashed #667eea;
       border-radius: 15px;
@@ -79,7 +79,7 @@
       margin: 20px;
       cursor: pointer;
     }
-
+    
     .foto-item {
       position: relative;
     }
@@ -88,7 +88,7 @@
       color: #666;
       margin-top: 5px;
     }
-
+    
     hr {
       border: none;
       height: 2px;
@@ -122,40 +122,26 @@
   <!-- ALBUM -->
   <div id="album" class="card hidden">
     <h2>📸 Album Compartido</h2>
-
+    
     <div class="upload-area" onclick="document.getElementById('fileInput').click()">
       <p>📤 Toca aqui para subir foto</p>
       <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="subirFoto(this)">
     </div>
     <div id="uploadStatus"></div>
-
+    
     <div id="galeria" class="album"></div>
-
+    
     <button onclick="cerrarSesion()" style="margin-top:20px; background:#6c757d;">Cerrar sesion</button>
   </div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.7"></script>
   <script>
     // Configuracion Supabase
     const SUPABASE_URL = 'https://jyzeizbxmniuuwcycdjw.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5emVpemJ4bW5pdXV3Y3ljZGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2OTU2NTksImV4cCI6MjA5ODI3MTY1OX0.VRuoWsNFhOy8yVE8AZXXK8e5iKIoVYs4u8oja133Jec';
 
-
-    // Crear cliente cuando la libreria este lista
-    let supabaseClient;
-    
-    function initSupabase() {
-      if (typeof window.supabase !== 'undefined') {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log('Supabase cargado correctamente');
-      } else {
-        console.error('Supabase no disponible');
-      }
-    }
-
-    // Intentar cargar inmediatamente y tambien al cargar la pagina
-    initSupabase();
-    window.addEventListener('load', initSupabase);
+    // Crear cliente
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     function responder(opcion) {
       const div = document.getElementById("resultado");
@@ -200,11 +186,6 @@
     }
 
     async function subirFoto(input) {
-      if (!supabaseClient) {
-        document.getElementById("uploadStatus").innerHTML = "<p style='color:red;'>❌ Error: Supabase no cargó</p>";
-        return;
-      }
-
       const file = input.files[0];
       if (!file) return;
 
@@ -221,15 +202,17 @@
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabaseClient
+        const { publicURL, error: urlError } = supabaseClient
           .storage
           .from('album fotos')
           .getPublicUrl(nombreArchivo);
 
+        if (urlError) throw urlError;
+
         const { error: dbError } = await supabaseClient
           .from('Papus')
           .insert([{ 
-            Url: publicUrl, 
+            Url: publicURL, 
             Usuario: 'papulandia',
             nombre_archivo: nombreArchivo 
           }]);
@@ -238,7 +221,7 @@
 
         status.innerHTML = "<p style='color:green;'>✅ Foto subida!</p>";
         cargarFotos();
-
+        
         setTimeout(() => status.innerHTML = "", 2000);
 
       } catch (err) {
@@ -248,11 +231,6 @@
     }
 
     async function cargarFotos() {
-      if (!supabaseClient) {
-        document.getElementById("galeria").innerHTML = "<p style='color:red;'>Error: Supabase no cargó</p>";
-        return;
-      }
-
       const galeria = document.getElementById("galeria");
       galeria.innerHTML = "<p>Cargando fotos...</p>";
 
