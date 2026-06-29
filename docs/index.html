@@ -2,122 +2,281 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Pro App</title>
+  <title>Pro App - Álbum Compartido</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       text-align: center;
       font-family: sans-serif;
-      padding-top: 50px;
-      background: #f0f0f0;
-    }
-    .hidden { display: none; }
-    input {
-      padding: 10px;
-      margin: 5px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 5px;
-      border: none;
-      background: #007bff;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
       color: white;
     }
-    button:hover { background: #0056b3; }
+    .hidden { display: none !important; }
+    
+    .card {
+      background: rgba(255,255,255,0.95);
+      color: #333;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      margin: 20px auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    h2 { margin-top: 0; color: #333; }
+    
+    button {
+      padding: 12px 25px;
+      margin: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+      background: #667eea;
+      color: white;
+      transition: transform 0.2s;
+    }
+    button:hover { transform: scale(1.05); }
+    button:active { transform: scale(0.95); }
+    
+    .btn-si { background: #28a745; }
+    .btn-no { background: #dc3545; }
+    
+    input[type="text"], input[type="password"], input[type="file"] {
+      padding: 12px;
+      margin: 8px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 2px solid #ddd;
+      width: 80%;
+      max-width: 300px;
+    }
+    
+    #error { color: #dc3545; margin-top: 10px; font-weight: bold; }
+    
     .album {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
       padding: 20px;
-      max-width: 800px;
-      margin: 0 auto;
     }
+    
     .album img {
       width: 100%;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      height: 150px;
+      object-fit: cover;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: transform 0.3s;
     }
-    #error { color: red; margin-top: 10px; }
+    .album img:hover { transform: scale(1.05); }
+    
+    .upload-area {
+      border: 3px dashed #667eea;
+      border-radius: 15px;
+      padding: 30px;
+      margin: 20px;
+      cursor: pointer;
+    }
+    
+    .foto-item {
+      position: relative;
+    }
+    .foto-item .usuario {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    hr {
+      border: none;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #667eea, transparent);
+      margin: 30px auto;
+      width: 80%;
+    }
   </style>
 </head>
 
 <body>
 
-  <!-- PREGUNTA 1 -->
-  <div id="pregunta">
+  <!-- ===== PREGUNTA 1: ¿Eres pro? ===== -->
+  <div id="pregunta" class="card">
     <h2>¿Crees que soy pro? 😎</h2>
-    <button onclick="responder('si')">Sí</button>
-    <button onclick="responder('no')">No</button>
+    <button class="btn-si" onclick="responder('si')">Sí</button>
+    <button class="btn-no" onclick="responder('no')">No</button>
   </div>
 
-  <div id="resultado" style="margin-top:30px;"></div>
+  <div id="resultado" style="margin-top:20px;"></div>
 
-  <!-- LOGIN (aparece solo si dice "Sí") -->
-  <div id="login" class="hidden">
-    <h2>🔒 Login</h2>
+  <!-- ===== LOGIN ===== -->
+  <div id="login" class="card hidden">
+    <h2>🔒 Acceso al Álbum</h2>
     <input type="text" id="user" placeholder="Usuario"><br>
     <input type="password" id="pass" placeholder="Contraseña"><br>
     <button onclick="verificarLogin()">Entrar</button>
     <div id="error"></div>
   </div>
 
-  <!-- ÁLBUM DE FOTOS (aparece solo con login correcto) -->
-  <div id="album" class="hidden">
-    <h2>📸 Álbum de Fotos</h2>
-    <div class="album">
-      <img src="jeje like.jpeg" alt="Foto 1">
-      <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" alt="Foto 2">
-      <img src="70e09c6e-afff-4a7e-ba0c-94e99d94.jpeg" alt="Foto 3">
-      <img src="36dffe84-8dc0-4517-9e26-0896c031ed6d.jpeg" alt="Foto 4">
+  <!-- ===== ÁLBUM COMPARTIDO ===== -->
+  <div id="album" class="card hidden">
+    <h2>📸 Álbum Compartido</h2>
+    
+    <!-- Subir foto -->
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+      <p>📤 Toca aquí o arrastra una foto para subirla</p>
+      <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="subirFoto(this)">
     </div>
-    <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
+    <div id="uploadStatus"></div>
+    
+    <!-- Galería -->
+    <div id="galeria" class="album"></div>
+    
+    <button onclick="cerrarSesion()" style="margin-top:20px; background:#6c757d;">Cerrar sesión</button>
   </div>
 
   <script>
-    // Pregunta inicial
+    // ===== CONFIGURACIÓN SUPABASE =====
+    const SUPABASE_URL = 'https://jyzeizbxmniuuwcycdjw.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5emVpemJ4bW5pdXV3Y3ljZGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MTgwMDAsImV4cCI6MjA2NjE5NDAwMH0.sb_publishable_0rw1k8qChhHW1acLGgcZIg_DmmtNiDY';
+    
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ===== PREGUNTA INICIAL =====
     function responder(opcion) {
       const div = document.getElementById("resultado");
       const login = document.getElementById("login");
 
       if (opcion === "si") {
-        div.innerHTML = "<h3>¡Correcto! 😎 Ahora inicia sesión</h3>";
+        div.innerHTML = '<div class="card"><h3>¡Correcto! 😎 Ahora inicia sesión</h3></div>';
         login.classList.remove("hidden");
+        document.getElementById("pregunta").classList.add("hidden");
       } else {
         div.innerHTML = `
-          <h3>💀 ok...</h3>
-          <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" width="250">
+          <div class="card">
+            <h3>💀 ok...</h3>
+            <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" width="250" style="border-radius:15px;">
+          </div>
         `;
-        login.classList.add("hidden");
       }
     }
 
-    // Verificar login
+    // ===== LOGIN =====
     function verificarLogin() {
-      const user = document.getElementById("user").value;
-      const pass = document.getElementById("pass").value;
+      const user = document.getElementById("user").value.trim();
+      const pass = document.getElementById("pass").value.trim();
       const error = document.getElementById("error");
 
       if (user === "papulandia" && pass === "20") {
         document.getElementById("login").classList.add("hidden");
         document.getElementById("album").classList.remove("hidden");
+        document.getElementById("resultado").classList.add("hidden");
+        cargarFotos();
         error.textContent = "";
       } else {
         error.textContent = "❌ Usuario o contraseña incorrectos";
       }
     }
 
-    // Cerrar sesión
+    // ===== CERRAR SESIÓN =====
     function cerrarSesion() {
       document.getElementById("album").classList.add("hidden");
-      document.getElementById("login").classList.remove("hidden");
+      document.getElementById("pregunta").classList.remove("hidden");
+      document.getElementById("resultado").innerHTML = "";
       document.getElementById("user").value = "";
       document.getElementById("pass").value = "";
     }
+
+    // ===== SUBIR FOTO =====
+    async function subirFoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const status = document.getElementById("uploadStatus");
+      status.innerHTML = "<p>⏳ Subiendo...</p>";
+
+      try {
+        // Generar nombre único
+        const nombreArchivo = Date.now() + '_' + file.name;
+        
+        // Subir a Storage
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('album-fotos')
+          .upload(nombreArchivo, file);
+
+        if (uploadError) throw uploadError;
+
+        // Obtener URL pública
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('album-fotos')
+          .getPublicUrl(nombreArchivo);
+
+        // Guardar en base de datos
+        const { error: dbError } = await supabase
+          .from('fotos')
+          .insert([{ 
+            url: publicUrl, 
+            usuario: 'papulandia',
+            nombre_archivo: nombreArchivo 
+          }]);
+
+        if (dbError) throw dbError;
+
+        status.innerHTML = "<p style='color:green;'>✅ Foto subida!</p>";
+        cargarFotos();
+        
+        setTimeout(() => status.innerHTML = "", 2000);
+
+      } catch (err) {
+        console.error(err);
+        status.innerHTML = "<p style='color:red;'>❌ Error: " + err.message + "</p>";
+      }
+    }
+
+    // ===== CARGAR FOTOS =====
+    async function cargarFotos() {
+      const galeria = document.getElementById("galeria");
+      galeria.innerHTML = "<p>Cargando fotos...</p>";
+
+      try {
+        const { data: fotos, error } = await supabase
+          .from('fotos')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (fotos.length === 0) {
+          galeria.innerHTML = "<p>No hay fotos aún. ¡Sé el primero en subir una!</p>";
+          return;
+        }
+
+        galeria.innerHTML = "";
+        fotos.forEach(foto => {
+          galeria.innerHTML += `
+            <div class="foto-item">
+              <img src="${foto.url}" alt="Foto" onerror="this.style.display='none'">
+              <div class="usuario">📷 ${foto.usuario}</div>
+            </div>
+          `;
+        });
+
+      } catch (err) {
+        galeria.innerHTML = "<p style='color:red;'>Error cargando fotos</p>";
+        console.error(err);
+      }
+    }
+
+    // Cargar fotos cada 10 segundos (para ver nuevas)
+    setInterval(() => {
+      if (!document.getElementById("album").classList.contains("hidden")) {
+        cargarFotos();
+      }
+    }, 10000);
   </script>
 
 </body>
