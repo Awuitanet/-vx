@@ -3,59 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <title>Pro App</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      padding-top: 50px;
+      background: #f0f0f0;
+    }
+    .hidden { display: none; }
+    input {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 5px;
+      border: none;
+      background: #007bff;
+      color: white;
+    }
+    button:hover { background: #0056b3; }
+    .album {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .album img {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    #error { color: red; margin-top: 10px; }
+  </style>
 </head>
 
-<body style="text-align:center; font-family:sans-serif; padding-top:50px;">
+<body>
 
-  <!-- Pregunta 1 -->
-  <h2>¿Crees que soy pro? 😎</h2>
-  <button onclick="responder('si')">Sí</button>
-  <button onclick="responder('no')">No</button>
+  <!-- PREGUNTA 1 -->
+  <div id="pregunta">
+    <h2>¿Crees que soy pro? 😎</h2>
+    <button onclick="responder('si')">Sí</button>
+    <button onclick="responder('no')">No</button>
+  </div>
 
   <div id="resultado" style="margin-top:30px;"></div>
 
-  <hr style="margin:40px 0; width:80%;">
+  <!-- LOGIN (aparece solo si dice "Sí") -->
+  <div id="login" class="hidden">
+    <h2>🔒 Login</h2>
+    <input type="text" id="user" placeholder="Usuario"><br>
+    <input type="password" id="pass" placeholder="Contraseña"><br>
+    <button onclick="verificarLogin()">Entrar</button>
+    <div id="error"></div>
+  </div>
 
-  <!-- Pregunta 2 -->
-  <h2>¿Eres mayor de 14? 🤔</h2>
-  <button onclick="responderEdad('si')">Sí</button>
-  <button onclick="responderEdad('no')">No</button>
-
-  <div id="resultadoEdad" style="margin-top:30px;"></div>
+  <!-- ÁLBUM DE FOTOS (aparece solo con login correcto) -->
+  <div id="album" class="hidden">
+    <h2>📸 Álbum de Fotos</h2>
+    <div class="album">
+      <img src="jeje like.jpeg" alt="Foto 1">
+      <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" alt="Foto 2">
+      <img src="70e09c6e-afff-4a7e-ba0c-94e99d94.jpeg" alt="Foto 3">
+      <img src="36dffe84-8dc0-4517-9e26-0896c031ed6d.jpeg" alt="Foto 4">
+    </div>
+    <button onclick="cerrarSesion()" style="margin-top:20px;">Cerrar sesión</button>
+  </div>
 
   <script>
-    // Pregunta 1 - ¿Eres pro?
+    // Pregunta inicial
     function responder(opcion) {
       const div = document.getElementById("resultado");
+      const login = document.getElementById("login");
 
       if (opcion === "si") {
-        div.innerHTML = `
-          <h3>jejeje like 😎</h3>
-          <img src="jeje like.jpeg" width="250">
-        `;
+        div.innerHTML = "<h3>¡Correcto! 😎 Ahora inicia sesión</h3>";
+        login.classList.remove("hidden");
       } else {
         div.innerHTML = `
           <h3>💀 ok...</h3>
           <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" width="250">
         `;
+        login.classList.add("hidden");
       }
     }
 
-    // Pregunta 2 - ¿Mayor de 14?
-    function responderEdad(opcion) {
-      const div = document.getElementById("resultadoEdad");
+    // Verificar login
+    function verificarLogin() {
+      const user = document.getElementById("user").value;
+      const pass = document.getElementById("pass").value;
+      const error = document.getElementById("error");
 
-      if (opcion === "si") {
-        div.innerHTML = `
-          <h3>¡Bienvenido! 😎👍</h3>
-          <img src="70e09c6e-afff-4a7e-ba0c-94e99d94.jpeg" width="250">
-        `;
+      if (user === "papulandia" && pass === "20") {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("album").classList.remove("hidden");
+        error.textContent = "";
       } else {
-        div.innerHTML = `
-          <h3>🚫 Acceso restringido</h3>
-          <img src=" 2F36dffe84-8dc0-4517-9e26-0896c031ed6d.jpeg " width="250">
-        `;
+        error.textContent = "❌ Usuario o contraseña incorrectos";
       }
+    }
+
+    // Cerrar sesión
+    function cerrarSesion() {
+      document.getElementById("album").classList.add("hidden");
+      document.getElementById("login").classList.remove("hidden");
+      document.getElementById("user").value = "";
+      document.getElementById("pass").value = "";
     }
   </script>
 
