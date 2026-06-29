@@ -137,7 +137,7 @@
 
   <script>
     const SUPABASE_URL = 'https://jyzeizbxmniuuwcycdjw.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5emVpemJ4bW5pdXV3Y3ljZGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MTgwMDAsImV4cCI6MjA2NjE5NDAwMH0.sb_publishable_0rw1k8qChhHW1acLGgcZIg_DmmtNiDY';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5emVpemJ4bW5pdXV3Y3ljZGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MTgwMDAsImV4cCI6MjA2NjE5NDAwMH0.sb_p[...]
     
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -194,19 +194,19 @@
       try {
         const nombreArchivo = Date.now() + '_' + file.name;
         
-        const { data: uploadData, error: uploadError } = await supabase
+        const { data: uploadData, error: uploadError } = await supabaseClient
           .storage
           .from('album fotos')
           .upload(nombreArchivo, file);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase
+        const { data: { publicUrl } } = supabaseClient
           .storage
           .from('album fotos')
           .getPublicUrl(nombreArchivo);
 
-        const { error: dbError } = await supabase
+        const { error: dbError } = await supabaseClient
           .from('Papus')
           .insert([{ 
             Url: publicUrl, 
@@ -232,7 +232,7 @@
       galeria.innerHTML = "<p>Cargando fotos...</p>";
 
       try {
-        const { data: fotos, error } = await supabase
+        const { data: fotos, error } = await supabaseClient
           .from('Papus')
           .select('*')
           .order('created_at', { ascending: false });
