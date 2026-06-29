@@ -1,1 +1,278 @@
-if (!file) return; const status = document.getElementById("uploadStatus"); status.innerHTML = "<p>⏳ Subiendo...</p>"; try { // Subir a Imgur const formData = new FormData(); formData.append('image', file); const imgurResponse = await fetch('https://api.imgur.com/3/image', { method: 'POST', headers: { 'Authorization': 'Client-ID 546c25a59c58ad7' }, body: formData }); const imgurData = await imgurResponse.json(); if (!imgurData.success) { throw new Error('Error subiendo a Imgur'); } const imageUrl = imgurData.data.link; // Guardar URL en GitHub Issue const commentBody = `📷 Foto subida por papulandia\n${imageUrl}`; const githubResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues/${ISSUE_NUMBER}/comments`, { method: 'POST', headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ body: commentBody }) }); if (!githubResponse.ok) { throw new Error('Error guardando en GitHub'); } status.innerHTML = "<p style='color:green;'>✅ Foto subida!</p>"; cargarFotos(); setTimeout(() => status.innerHTML = "", 2000); } catch (err) { console.error(err); status.innerHTML = "<p style='color:red;'>❌ Error: " + err.message + "</p>"; } } // Cargar fotos desde GitHub Issue async function cargarFotos() { const galeria = document.getElementById("galeria"); galeria.innerHTML = "<p>Cargando fotos...</p>"; try { const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues/${ISSUE_NUMBER}/comments`, { headers: { 'Accept': 'application/vnd.github.v3+json'
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pro App - Album Compartido</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    .hidden { display: none !important; }
+    
+    .card {
+      background: rgba(255,255,255,0.95);
+      color: #333;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      margin: 20px auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    h2 { margin-top: 0; color: #333; }
+    
+    button {
+      padding: 12px 25px;
+      margin: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: none;
+      background: #667eea;
+      color: white;
+      transition: transform 0.2s;
+    }
+    button:hover { transform: scale(1.05); }
+    
+    .btn-si { background: #28a745; }
+    .btn-no { background: #dc3545; }
+    
+    input[type="text"], input[type="password"], input[type="file"] {
+      padding: 12px;
+      margin: 8px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 2px solid #ddd;
+      width: 80%;
+      max-width: 300px;
+    }
+    
+    #error { color: #dc3545; margin-top: 10px; font-weight: bold; }
+    
+    .album {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    
+    .album img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .upload-area {
+      border: 3px dashed #667eea;
+      border-radius: 15px;
+      padding: 30px;
+      margin: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- PREGUNTA 1 -->
+  <div id="pregunta" class="card">
+    <h2>¿Crees que soy pro? 😎</h2>
+    <button class="btn-si" onclick="responder('si')">Sí</button>
+    <button class="btn-no" onclick="responder('no')">No</button>
+  </div>
+
+  <div id="resultado" style="margin-top:20px;"></div>
+
+  <!-- LOGIN -->
+  <div id="login" class="card hidden">
+    <h2>🔒 Acceso al Album</h2>
+    <input type="text" id="user" placeholder="Usuario"><br>
+    <input type="password" id="pass" placeholder="Contraseña"><br>
+    <button onclick="verificarLogin()">Entrar</button>
+    <div id="error"></div>
+  </div>
+
+  <!-- ALBUM -->
+  <div id="album" class="card hidden">
+    <h2>📸 Album Compartido</h2>
+    
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+      <p>📤 Toca aqui para subir foto</p>
+      <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="subirFoto(this)">
+    </div>
+    <div id="uploadStatus"></div>
+    
+    <div id="galeria" class="album"></div>
+    
+    <button onclick="cerrarSesion()" style="margin-top:20px; background:#6c757d;">Cerrar sesion</button>
+  </div>
+
+  <script>
+    // CONFIGURACION
+    const GITHUB_TOKEN = 'GH_TOKEN_PLACEHOLDER';
+    const REPO_OWNER = 'Awuitanet';
+    const REPO_NAME = '-vx';
+    const ISSUE_NUMBER = 1;
+
+    function responder(opcion) {
+      const div = document.getElementById("resultado");
+      const login = document.getElementById("login");
+
+      if (opcion === "si") {
+        div.innerHTML = '<div class="card"><h3>¡Correcto! 😎 Ahora inicia sesion</h3></div>';
+        login.classList.remove("hidden");
+        document.getElementById("pregunta").classList.add("hidden");
+      } else {
+        div.innerHTML = `
+          <div class="card">
+            <h3>💀 ok...</h3>
+            <img src="bbae58d9-73a6-4386-93ca-c862d63236fc.jpeg" width="250" style="border-radius:15px;">
+          </div>
+        `;
+      }
+    }
+
+    function verificarLogin() {
+      const user = document.getElementById("user").value.trim();
+      const pass = document.getElementById("pass").value.trim();
+      const error = document.getElementById("error");
+
+      if (user === "papulandia" && pass === "20") {
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("album").classList.remove("hidden");
+        document.getElementById("resultado").classList.add("hidden");
+        cargarFotos();
+        error.textContent = "";
+      } else {
+        error.textContent = "❌ Usuario o contraseña incorrectos";
+      }
+    }
+
+    function cerrarSesion() {
+      document.getElementById("album").classList.add("hidden");
+      document.getElementById("pregunta").classList.remove("hidden");
+      document.getElementById("resultado").innerHTML = "";
+      document.getElementById("user").value = "";
+      document.getElementById("pass").value = "";
+    }
+
+    async function subirFoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const status = document.getElementById("uploadStatus");
+      status.innerHTML = "<p>⏳ Subiendo...</p>";
+
+      try {
+        // Subir a Imgur
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const imgurResponse = await fetch('https://api.imgur.com/3/image', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Client-ID 546c25a59c58ad7'
+          },
+          body: formData
+        });
+
+        const imgurData = await imgurResponse.json();
+        
+        if (!imgurData.success) {
+          throw new Error('Error subiendo a Imgur');
+        }
+
+        const imageUrl = imgurData.data.link;
+
+        // Guardar URL en GitHub Issue
+        const commentBody = `📷 Foto subida por papulandia\n${imageUrl}`;
+        
+        const githubResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues/${ISSUE_NUMBER}/comments`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ body: commentBody })
+        });
+
+        if (!githubResponse.ok) {
+          throw new Error('Error guardando en GitHub');
+        }
+
+        status.innerHTML = "<p style='color:green;'>✅ Foto subida!</p>";
+        cargarFotos();
+        setTimeout(() => status.innerHTML = "", 2000);
+
+      } catch (err) {
+        console.error(err);
+        status.innerHTML = "<p style='color:red;'>❌ Error: " + err.message + "</p>";
+      }
+    }
+
+    async function cargarFotos() {
+      const galeria = document.getElementById("galeria");
+      galeria.innerHTML = "<p>Cargando fotos...</p>";
+
+      try {
+        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues/${ISSUE_NUMBER}/comments`, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Error cargando comentarios');
+        }
+
+        const comments = await response.json();
+
+        const fotos = [];
+        comments.forEach(comment => {
+          const urlMatch = comment.body.match(/https:\/\/i\.imgur\.com\/[a-zA-Z0-9]+\.(jpg|jpeg|png|gif)/);
+          if (urlMatch) {
+            fotos.push({
+              url: urlMatch[0],
+              usuario: 'papulandia'
+            });
+          }
+        });
+
+        if (fotos.length === 0) {
+          galeria.innerHTML = "<p>No hay fotos aun. ¡Se el primero!</p>";
+          return;
+        }
+
+        galeria.innerHTML = "";
+        fotos.reverse().forEach(foto => {
+          galeria.innerHTML += `
+            <div class="foto-item">
+              <img src="${foto.url}" alt="Foto" onerror="this.style.display='none'">
+              <div style="font-size:12px; color:#666;">📷 ${foto.usuario}</div>
+            </div>
+          `;
+        });
+
+      } catch (err) {
+        galeria.innerHTML = "<p style='color:red;'>Error cargando fotos</p>";
+        console.error(err);
+      }
+    }
+
+    setInterval(() => {
+      if (!document.getElementById("album").classList.contains("hidden")) {
+        cargarFotos();
+      }
+    }, 10000);
+  </script>
+
+</body>
+</html>
