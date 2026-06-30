@@ -1,5 +1,8 @@
-node_modules
-venv
-android
-dist
-npm-debug.log
+
+# Secrets
+.env
+*.env
+secrets.json
+
+# Dependencias
+node_modules/
