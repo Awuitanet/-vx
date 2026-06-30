@@ -105,15 +105,6 @@
       margin: 30px auto;
       width: 80%;
     }
-
-    .info-box {
-      background: #e3f2fd;
-      color: #1565c0;
-      padding: 15px;
-      border-radius: 10px;
-      margin: 10px 0;
-      font-size: 14px;
-    }
   </style>
 </head>
 
@@ -154,15 +145,14 @@
 
   <script>
     // ═══════════════════════════════════════════════════
-    // CONFIGURACIÓN - Inyectado por GitHub Actions
+    // CONFIGURACIÓN
     // ═══════════════════════════════════════════════════
     const CONFIG = {
-      GITHUB_TOKEN: '__GITHUB_TOKEN__',  // Reemplazado por GitHub Actions
       REPO_OWNER: 'Awuitanet',
       REPO_NAME: '-vx',
       ISSUE_NUMBER: 1,
       IMGUR_CLIENT_ID: '546c25a59c58ad7',
-      API_ENDPOINT: '__API_ENDPOINT__'  // Tu servidor proxy (opcional)
+      API_ENDPOINT: 'https://album-api-proxy.vercel.app/api/upload'  // Tu servidor Vercel
     };
 
     // ═══════════════════════════════════════════════════
@@ -212,7 +202,7 @@
     }
 
     // ═══════════════════════════════════════════════════
-    // SUBIR FOTO: Imgur → GitHub Issue (vía proxy)
+    // SUBIR FOTO: Imgur → Backend Proxy → GitHub
     // ═══════════════════════════════════════════════════
 
     async function subirFoto(input) {
@@ -256,43 +246,20 @@
 
         const commentBody = `📷 **Foto subida por papulandia**\n\n![Foto](${imageUrl})\n\n<!-- imgur:${deleteHash} -->`;
 
-        // Usar endpoint proxy si está disponible, sino GitHub directo
-        const useProxy = CONFIG.API_ENDPOINT && CONFIG.API_ENDPOINT !== '__API_ENDPOINT__';
-        let githubResponse;
+        // Usar servidor proxy (seguro y confiable)
+        const proxyResponse = await fetch(CONFIG.API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            comment_body: commentBody
+          })
+        });
 
-        if (useProxy) {
-          // Enviar al servidor proxy (más seguro)
-          githubResponse = await fetch(CONFIG.API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              owner: CONFIG.REPO_OWNER,
-              repo: CONFIG.REPO_NAME,
-              issue_number: CONFIG.ISSUE_NUMBER,
-              comment_body: commentBody
-            })
-          });
-        } else {
-          // Directo a GitHub (requiere que se inyecte el token)
-          githubResponse = await fetch(
-            `https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/issues/${CONFIG.ISSUE_NUMBER}/comments`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ body: commentBody })
-            }
-          );
-        }
-
-        if (!githubResponse.ok) {
-          const errorData = await githubResponse.json();
-          throw new Error(errorData.message || 'Error guardando en GitHub');
+        if (!proxyResponse.ok) {
+          const errorData = await proxyResponse.json();
+          throw new Error(errorData.error || 'Error guardando en GitHub');
         }
 
         mostrarStatus("✅ ¡Foto subida correctamente!", "success");
