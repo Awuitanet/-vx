@@ -105,6 +105,15 @@
       margin: 30px auto;
       width: 80%;
     }
+
+    .info-box {
+      background: #e3f2fd;
+      color: #1565c0;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px 0;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -145,14 +154,15 @@
 
   <script>
     // ═══════════════════════════════════════════════════
-    // CONFIGURACIÓN - EL WORKFLOW REEMPLAZA ESTO AUTOMÁTICAMENTE
+    // CONFIGURACIÓN - Inyectado por GitHub Actions
     // ═══════════════════════════════════════════════════
     const CONFIG = {
-      GITHUB_TOKEN: 'GH_TOKEN_PLACEHOLDER',
+      GITHUB_TOKEN: '__GITHUB_TOKEN__',  // Reemplazado por GitHub Actions
       REPO_OWNER: 'Awuitanet',
       REPO_NAME: '-vx',
       ISSUE_NUMBER: 1,
-      IMGUR_CLIENT_ID: '546c25a59c58ad7'
+      IMGUR_CLIENT_ID: '546c25a59c58ad7',
+      API_ENDPOINT: '__API_ENDPOINT__'  // Tu servidor proxy (opcional)
     };
 
     // ═══════════════════════════════════════════════════
@@ -202,7 +212,7 @@
     }
 
     // ═══════════════════════════════════════════════════
-    // SUBIR FOTO: Imgur → GitHub Issue
+    // SUBIR FOTO: Imgur → GitHub Issue (vía proxy)
     // ═══════════════════════════════════════════════════
 
     async function subirFoto(input) {
@@ -246,18 +256,39 @@
 
         const commentBody = `📷 **Foto subida por papulandia**\n\n![Foto](${imageUrl})\n\n<!-- imgur:${deleteHash} -->`;
 
-        const githubResponse = await fetch(
-          `https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/issues/${CONFIG.ISSUE_NUMBER}/comments`,
-          {
+        // Usar endpoint proxy si está disponible, sino GitHub directo
+        const useProxy = CONFIG.API_ENDPOINT && CONFIG.API_ENDPOINT !== '__API_ENDPOINT__';
+        let githubResponse;
+
+        if (useProxy) {
+          // Enviar al servidor proxy (más seguro)
+          githubResponse = await fetch(CONFIG.API_ENDPOINT, {
             method: 'POST',
             headers: {
-              'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-              'Accept': 'application/vnd.github.v3+json',
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ body: commentBody })
-          }
-        );
+            body: JSON.stringify({
+              owner: CONFIG.REPO_OWNER,
+              repo: CONFIG.REPO_NAME,
+              issue_number: CONFIG.ISSUE_NUMBER,
+              comment_body: commentBody
+            })
+          });
+        } else {
+          // Directo a GitHub (requiere que se inyecte el token)
+          githubResponse = await fetch(
+            `https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/issues/${CONFIG.ISSUE_NUMBER}/comments`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ body: commentBody })
+            }
+          );
+        }
 
         if (!githubResponse.ok) {
           const errorData = await githubResponse.json();
