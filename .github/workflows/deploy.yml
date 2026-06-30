@@ -1,0 +1,35 @@
+name: Deploy & Inject GitHub Token
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Inject GitHub Token into HTML
+        run: |
+          sed -i "s|__GITHUB_TOKEN__|${{ secrets.GITHUB_TOKEN }}|g" docs/index.html
+          sed -i "s|__API_ENDPOINT__|${{ secrets.API_ENDPOINT }}|g" docs/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
